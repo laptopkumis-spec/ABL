@@ -1,0 +1,40 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: produk
+              uri: lb://produk-service
+              predicates:
+                - Path=/api/produk/**
+            - id: pelanggan
+              uri: lb://pelanggan-service
+              predicates:
+                - Path=/api/pelanggan/**
+            - id: order
+              uri: lb://order-service
+              predicates:
+                - Path=/api/orders/**
+            - id: producer
+              uri: lb://producer-service
+              predicates:
+                - Path=/api/pesan/**
+            - id: consumer
+              uri: lb://consumer-service
+              predicates:
+                - Path=/api/consumer/**
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost

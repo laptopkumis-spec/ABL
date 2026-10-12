@@ -3,49 +3,65 @@ package com.aufi.produk.controller;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import com.aufi.produk.entity.Jenis;
 import com.aufi.produk.entity.Produk;
-import com.aufi.produk.service.ProdukService;
+import com.aufi.produk.service.AppService;
 
 @RestController
 @RequestMapping("/api/produk")
 public class ProdukController {
 
     @Autowired
-    ProdukService produkService;
+    private AppService appService;
 
     @GetMapping
     public List<Produk> getAllProduk() {
-        return produkService.getAllProduk();
+        return appService.getAllProduk();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Produk> getProdukById(@PathVariable("id") Long id) {
-        Produk produk = produkService.getProdukById(id);
+        Produk produk = appService.getProdukById(id);
         if (produk == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(produk);
     }
 
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<Produk> createProduk(@RequestBody Produk produk) {
-        return ResponseEntity.ok(produkService.saveProduk(produk));
+        return ResponseEntity.ok(appService.saveProduk(produk));
     }
 
     @GetMapping("/jenis")
-    public List<String> getAllJenis() {
-        return produkService.getAllJenisDistinct();
+    public List<String> getAllJenisDistinct() {
+        return appService.getAllJenisDistinct();
     }
 
     @GetMapping("/jenis/{jenis}")
     public List<Produk> getProdukByJenis(@PathVariable("jenis") String jenis) {
-        return produkService.getProdukByJenis(jenis);
-    } // dari si postman, request ke controller, komunikasi dengan controller,
-      // controller komunikasi dengan service
+        return appService.getProdukByJenis(jenis);
+    }
+
+    // --- Endpoints for Jenis Entity (Integrated into ProdukController) ---
+    @GetMapping("/jenis-entity")
+    public List<Jenis> getAllJenisEntity() {
+        return appService.getAllJenisEntity();
+    }
+
+    @PostMapping("/jenis-entity")
+    public ResponseEntity<Jenis> createJenisEntity(@RequestBody Jenis jenis) {
+        return ResponseEntity.ok(appService.saveJenis(jenis));
+    }
+
+    @DeleteMapping("/jenis-entity/{id}")
+    public ResponseEntity<Void> deleteJenisEntity(@PathVariable("id") Long id) {
+        Jenis jenis = appService.getJenisEntityById(id);
+        if (jenis == null) {
+            return ResponseEntity.notFound().build();
+        }
+        appService.deleteJenis(id);
+        return ResponseEntity.ok().build();
+    }
 }
