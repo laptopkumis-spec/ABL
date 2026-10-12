@@ -8,6 +8,8 @@ import org.springframework.web.client.RestTemplate;
 import com.aufi.order.VO.Produk;
 import com.aufi.order.VO.ResponseTemplate;
 import com.aufi.order.entity.Order;
+import com.aufi.order.event.OrderEvent;
+import com.aufi.order.event.OrderEventPublisher;
 import com.aufi.order.repository.OrderRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,9 @@ public class OrderService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private OrderEventPublisher eventPublisher;
+
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
@@ -33,11 +38,15 @@ public class OrderService {
     }
 
     public Order saveOrder(Order order) {
-        return orderRepository.save(order);
+        boolean isNew = order.getId() == 0 || !orderRepository.existsById(order.getId());
+        Order saved = orderRepository.save(order);
+        eventPublisher.publish(isNew ? OrderEvent.created(saved) : OrderEvent.updated(saved));
+        return saved;
     }
 
     public void deleteOrder(long id) {
         orderRepository.deleteById(id);
+        eventPublisher.publish(OrderEvent.deleted(id));
     }
 
     public List<ResponseTemplate> getOrderWithProdukById(Long id) {
