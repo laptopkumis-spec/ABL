@@ -34,3 +34,9 @@ HELP.md
 # AI assistant artifacts (GitHub Copilot modernization hooks)
 .github/modernize/
 **/.github/modernize/
+
+# Secrets / kredensial lokal (JANGAN commit)
+application-local.properties
+**/application-local.properties
+*.secret
+.env

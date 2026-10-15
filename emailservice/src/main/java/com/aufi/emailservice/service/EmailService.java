@@ -6,13 +6,19 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import com.aufi.emailservice.event.OrderEvent;
 
 /**
- * Layanan pembuat email. Menyusun isi email berdasarkan jenis event order, lalu
- * "mengirimkannya" — pada tahap ini pengiriman disimulasikan lewat LOG dan
- * disimpan di memori agar bisa dilihat melalui endpoint REST.
+ * Layanan pembuat & pengirim email.
+ *
+ * Menyusun isi email berdasarkan jenis event order, lalu MENGIRIMKANNYA secara
+ * sungguhan melalui SMTP (JavaMailSender) ke alamat tujuan yang dikonfigurasi.
+ * Hasil setiap pengiriman (berhasil/gagal) juga disimpan di memori agar bisa
+ * diperiksa melalui endpoint REST /api/emails.
  */
 @Service
 public class EmailService {
@@ -20,29 +26,68 @@ public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /** Daftar email yang "terkirim" (disimpan di memori untuk keperluan demo). */
+    private final JavaMailSender mailSender;
+
+    /** Alamat tujuan notifikasi (dari app.mail.to). */
+    @Value("${app.mail.to:}")
+    private String alamatTujuan;
+
+    /** Pengirim (dari spring.mail.username). */
+    @Value("${spring.mail.username:}")
+    private String alamatPengirim;
+
+    /** Daftar email yang diproses (arsip + status pengiriman). */
     private final List<EmailMessage> outbox = new ArrayList<>();
+
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     public synchronized EmailMessage process(OrderEvent event) {
         EmailMessage email = build(event);
+
+        // Tentukan tujuan: pakai app.mail.to kalau diisi; jika tidak, pakai email pelanggan
+        String tujuan = (alamatTujuan != null && !alamatTujuan.isBlank())
+                ? alamatTujuan
+                : email.getKepadaEmail();
+        email.setKepadaEmail(tujuan);
+
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            if (alamatPengirim != null && !alamatPengirim.isBlank()) {
+                msg.setFrom(alamatPengirim);
+            }
+            msg.setTo(tujuan);
+            msg.setSubject(email.getSubjek());
+            msg.setText(email.getIsi());
+            mailSender.send(msg);
+
+            email.setStatus("SENT");
+            log.info("\n======================================================"
+                    + "\n  EMAIL TERKIRIM (SMTP)"
+                    + "\n  Kepada : {} <{}>"
+                    + "\n  Subjek : {}"
+                    + "\n======================================================",
+                    email.getKepadaNama(), tujuan, email.getSubjek());
+        } catch (Exception e) {
+            email.setStatus("FAILED");
+            email.setError(e.getMessage());
+            log.error("\n======================================================"
+                    + "\n  EMAIL GAGAL TERKIRIM"
+                    + "\n  Kepada : {}"
+                    + "\n  Subjek : {}"
+                    + "\n  Error  : {}"
+                    + "\n======================================================",
+                    tujuan, email.getSubjek(), e.getMessage());
+        }
+
         outbox.add(email);
-
-        // "Pengiriman" email -> log console
-        log.info("\n======================================================"
-                + "\n  EMAIL TERKIRIM"
-                + "\n  Kepada : {} <{}>"
-                + "\n  Subjek : {}"
-                + "\n------------------------------------------------------"
-                + "\n{}"
-                + "\n======================================================",
-                email.getKepadaNama(), email.getKepadaEmail(), email.getSubjek(), email.getIsi());
-
         return email;
     }
 
     private EmailMessage build(OrderEvent e) {
         String kepadaNama = e.getNamaPelanggan() != null ? e.getNamaPelanggan() : "Pelanggan";
-        String kepadaEmail = e.getEmailPelanggan() != null ? e.getEmailPelanggan() : "(email tidak diketahui)";
+        String kepadaEmail = e.getEmailPelanggan() != null ? e.getEmailPelanggan() : "";
 
         String subjek;
         String isi;
@@ -82,7 +127,8 @@ public class EmailService {
                 + "  Harga Satuan  : " + e.getHargaProduk() + "\n"
                 + "  Jumlah        : " + e.getJumlah() + "\n"
                 + "  Total         : " + e.getTotal() + "\n"
-                + "  Tgl Transaksi : " + e.getTglTransaksi();
+                + "  Tgl Transaksi : " + e.getTglTransaksi() + "\n\n"
+                + "---\nEmail otomatis dari Order Service (CQRS + RabbitMQ).";
     }
 
     public synchronized List<EmailMessage> getOutbox() {
@@ -97,7 +143,7 @@ public class EmailService {
         outbox.clear();
     }
 
-    /** Model pesan email. */
+    /** Model pesan email + status pengiriman. */
     public static class EmailMessage {
         private String tipe;
         private String kepadaEmail;
@@ -105,6 +151,8 @@ public class EmailService {
         private String subjek;
         private String isi;
         private String waktu;
+        private String status;
+        private String error;
 
         public EmailMessage() {
         }
@@ -126,6 +174,10 @@ public class EmailService {
             return kepadaEmail;
         }
 
+        public void setKepadaEmail(String kepadaEmail) {
+            this.kepadaEmail = kepadaEmail;
+        }
+
         public String getKepadaNama() {
             return kepadaNama;
         }
@@ -140,6 +192,22 @@ public class EmailService {
 
         public String getWaktu() {
             return waktu;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
         }
     }
 }
