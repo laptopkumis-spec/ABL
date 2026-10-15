@@ -22,18 +22,13 @@ public class OrderEvent {
     private int jumlah;
     private double total;
 
-    public OrderEvent() {
-    }
+    // --- data terdenormalisasi (diisi command side sebelum publish) ---
+    private String namaProduk;
+    private double hargaProduk;
+    private String namaPelanggan;
+    private String emailPelanggan;
 
-    public OrderEvent(EventType eventType, Long orderId, Long produkId, Long pelangganId,
-                      LocalDate tglTransaksi, int jumlah, double total) {
-        this.eventType = eventType;
-        this.orderId = orderId;
-        this.produkId = produkId;
-        this.pelangganId = pelangganId;
-        this.tglTransaksi = tglTransaksi;
-        this.jumlah = jumlah;
-        this.total = total;
+    public OrderEvent() {
     }
 
     // ---- factory ----
@@ -46,13 +41,20 @@ public class OrderEvent {
         return from(EventType.UPDATED, o);
     }
 
-    public static OrderEvent deleted(Long orderId) {
-        return new OrderEvent(EventType.DELETED, orderId, null, null, null, 0, 0);
+    public static OrderEvent deleted(Order o) {
+        return from(EventType.DELETED, o);
     }
 
     private static OrderEvent from(EventType type, Order o) {
-        return new OrderEvent(type, o.getId(), o.getProdukId(), o.getPelangganId(),
-                o.getTglTransaksi(), o.getJumlah(), o.getTotal());
+        OrderEvent e = new OrderEvent();
+        e.eventType = type;
+        e.orderId = o.getId();
+        e.produkId = o.getProdukId();
+        e.pelangganId = o.getPelangganId();
+        e.tglTransaksi = o.getTglTransaksi();
+        e.jumlah = o.getJumlah();
+        e.total = o.getTotal();
+        return e;
     }
 
     // ---- getters / setters ----
@@ -111,6 +113,38 @@ public class OrderEvent {
 
     public void setTotal(double total) {
         this.total = total;
+    }
+
+    public String getNamaProduk() {
+        return namaProduk;
+    }
+
+    public void setNamaProduk(String namaProduk) {
+        this.namaProduk = namaProduk;
+    }
+
+    public double getHargaProduk() {
+        return hargaProduk;
+    }
+
+    public void setHargaProduk(double hargaProduk) {
+        this.hargaProduk = hargaProduk;
+    }
+
+    public String getNamaPelanggan() {
+        return namaPelanggan;
+    }
+
+    public void setNamaPelanggan(String namaPelanggan) {
+        this.namaPelanggan = namaPelanggan;
+    }
+
+    public String getEmailPelanggan() {
+        return emailPelanggan;
+    }
+
+    public void setEmailPelanggan(String emailPelanggan) {
+        this.emailPelanggan = emailPelanggan;
     }
 
     @Override

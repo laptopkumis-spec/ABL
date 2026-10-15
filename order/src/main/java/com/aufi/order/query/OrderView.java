@@ -24,7 +24,13 @@ public class OrderView {
     private int jumlah;
     private double total;
 
-    /** CREATED / UPDATED sebagai penanda versi terakhir read model. */
+    // --- field terdenormalisasi ---
+    private String namaProduk;
+    private double hargaProduk;
+    private String namaPelanggan;
+    private String emailPelanggan;
+
+    /** CREATED / UPDATED / DELETED sebagai penanda versi terakhir read model. */
     private String status;
 
     private LocalDateTime lastUpdated;
@@ -78,6 +84,38 @@ public class OrderView {
 
     public void setTotal(double total) {
         this.total = total;
+    }
+
+    public String getNamaProduk() {
+        return namaProduk;
+    }
+
+    public void setNamaProduk(String namaProduk) {
+        this.namaProduk = namaProduk;
+    }
+
+    public double getHargaProduk() {
+        return hargaProduk;
+    }
+
+    public void setHargaProduk(double hargaProduk) {
+        this.hargaProduk = hargaProduk;
+    }
+
+    public String getNamaPelanggan() {
+        return namaPelanggan;
+    }
+
+    public void setNamaPelanggan(String namaPelanggan) {
+        this.namaPelanggan = namaPelanggan;
+    }
+
+    public String getEmailPelanggan() {
+        return emailPelanggan;
+    }
+
+    public void setEmailPelanggan(String emailPelanggan) {
+        this.emailPelanggan = emailPelanggan;
     }
 
     public String getStatus() {

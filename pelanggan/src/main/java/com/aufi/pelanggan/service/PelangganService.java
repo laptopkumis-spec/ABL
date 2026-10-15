@@ -34,6 +34,7 @@ public class PelangganService {
             existing.setNama(pelanggan.getNama());
             existing.setAlamat(pelanggan.getAlamat());
             existing.setJenisKelamin(pelanggan.getJenisKelamin());
+            existing.setEmail(pelanggan.getEmail());
             return pelangganRepository.save(existing);
         }
         return null;

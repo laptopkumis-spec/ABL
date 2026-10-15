@@ -5,6 +5,7 @@ public class PelangganDto {
     private String nama;
     private String alamat;
     private String jenisKelamin;
+    private String email;
 
     public PelangganDto() {
     }
@@ -39,5 +40,13 @@ public class PelangganDto {
 
     public void setJenisKelamin(String jenisKelamin) {
         this.jenisKelamin = jenisKelamin;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

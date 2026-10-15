@@ -35,6 +35,11 @@ public class OrderViewProjector {
         v.setTglTransaksi(e.getTglTransaksi());
         v.setJumlah(e.getJumlah());
         v.setTotal(e.getTotal());
+        // field terdenormalisasi
+        v.setNamaProduk(e.getNamaProduk());
+        v.setHargaProduk(e.getHargaProduk());
+        v.setNamaPelanggan(e.getNamaPelanggan());
+        v.setEmailPelanggan(e.getEmailPelanggan());
         v.setStatus(e.getEventType().name());
         v.setLastUpdated(LocalDateTime.now());
         return v;

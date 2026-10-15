@@ -45,8 +45,11 @@ public class OrderService {
     }
 
     public void deleteOrder(long id) {
+        Order order = orderRepository.findById(id).orElse(null);
         orderRepository.deleteById(id);
-        eventPublisher.publish(OrderEvent.deleted(id));
+        if (order != null) {
+            eventPublisher.publish(OrderEvent.deleted(order));
+        }
     }
 
     public List<ResponseTemplate> getOrderWithProdukById(Long id) {
